@@ -22,6 +22,14 @@ const (
 // DefaultCapabilities sets the default capabilities of the client library
 var DefaultCapabilities = []string{
 	"urn:ietf:params:netconf:base:1.0",
+	//"urn:ietf:params:netconf:capability:writable-running:1.0",
+	//"urn:ietf:params:netconf:capability:notification:1.0",
+	//"urn:ietf:params:netconf:capability:validate:1.0",
+	//"urn:ietf:params:netconf:capability:interleave:1.0",
+	//"urn:ietf:params:netconf:capability:rollback-on-error:1.0",
+	//"urn:h3c:params:netconf:capability:h3c-netconf-ext:1.0",
+	//"urn:h3c:params:netconf:capability:h3c-save-point:1.0",
+	//"urn:h3c:params:netconf:capability:not-need-top:1.0",
 }
 
 // HelloMessage is used when bringing up a NETCONF session
@@ -48,13 +56,25 @@ type transportBasicIO struct {
 // Sends a well formated NETCONF rpc message as a slice of bytes adding on the
 // nessisary framining messages.
 func (t *transportBasicIO) Send(data []byte) error {
-	t.Write(data)
+	_, err := t.Write(data)
+	if err != nil {
+		fmt.Printf("write data failed: %v\n", err)
+	}
 	// Pad to make sure the msgSeparator isn't sent across a 4096-byte boundary
 	if (len(data)+len(msgSeperator))%4096 < 6 {
-		t.Write([]byte("      "))
+		_, err = t.Write([]byte("      "))
+		if err != nil {
+			fmt.Printf("write table failed: %v\n", err)
+		}
 	}
-	t.Write([]byte(msgSeperator))
-	t.Write([]byte("\n"))
+	_, err = t.Write([]byte(msgSeperator))
+	if err != nil {
+		fmt.Printf("write msgSeperator failed: %v\n", err)
+	}
+	_, err = t.Write([]byte("\n"))
+	if err != nil {
+		fmt.Printf("write newline failed: %v\n", err)
+	}
 	return nil // TODO: Implement error handling!
 }
 
@@ -70,6 +90,7 @@ func (t *transportBasicIO) SendHello(hello *HelloMessage) error {
 
 	header := []byte(xml.Header)
 	val = append(header, val...)
+	fmt.Printf("SendHello: %s\n", string(val))
 	err = t.Send(val)
 	return err
 }
@@ -81,6 +102,8 @@ func (t *transportBasicIO) ReceiveHello() (*HelloMessage, error) {
 	if err != nil {
 		return hello, err
 	}
+
+	fmt.Printf("ReceiveHello: %s\n", string(val))
 
 	err = xml.Unmarshal(val, hello)
 	return hello, err

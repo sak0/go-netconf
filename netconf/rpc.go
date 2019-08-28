@@ -8,23 +8,23 @@ package netconf
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/xml"
 	"fmt"
 	"io"
+	"crypto/rand"
 )
 
 // RPCMessage represents an RPC Message to be sent.
 type RPCMessage struct {
-	MessageID string
 	Methods   []RPCMethod
+	MessageID string
 }
 
 // NewRPCMessage generates a new RPC Message structure with the provided methods
 func NewRPCMessage(methods []RPCMethod) *RPCMessage {
 	return &RPCMessage{
-		MessageID: msgID(),
 		Methods:   methods,
+		MessageID: msgID(),
 	}
 }
 
@@ -36,12 +36,13 @@ func (m *RPCMessage) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	}
 
 	data := struct {
-		MessageID string `xml:"message-id,attr"`
 		Xmlns     string `xml:"xmlns,attr"`
+		MessageID string `xml:"message-id,attr"`
+		//Xmlns     string `xml:"xmlns:xc,attr"`
 		Methods   []byte `xml:",innerxml"`
 	}{
-		m.MessageID,
 		"urn:ietf:params:xml:ns:netconf:base:1.0",
+		m.MessageID,
 		buf.Bytes(),
 	}
 
@@ -133,5 +134,9 @@ func uuid() string {
 	io.ReadFull(rand.Reader, b)
 	b[6] = (b[6] & 0x0f) | 0x40
 	b[8] = (b[8] & 0x3f) | 0x80
-	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+	return fmt.Sprintf("urn:uuid:%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }
+
+//func uuid() string {
+//	return "abc"
+//}

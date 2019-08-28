@@ -12,6 +12,7 @@ package netconf
 
 import (
 	"encoding/xml"
+	"github.com/golang/glog"
 )
 
 // Session defines the necessary components for a NETCONF session
@@ -36,9 +37,13 @@ func (s *Session) Exec(methods ...RPCMethod) (*RPCReply, error) {
 		return nil, err
 	}
 
-	header := []byte(xml.Header)
+	//xmlHeader := `<?xml version="1.0" encoding="UTF-8"?>`
+	noneHeader := ``
+	header := []byte(noneHeader)
 	request = append(header, request...)
 
+	//fmt.Printf("trasport send %s\n", request)
+	glog.V(2).Infof("transport send %s", request)
 	err = s.Transport.Send(request)
 	if err != nil {
 		return nil, err
@@ -48,6 +53,7 @@ func (s *Session) Exec(methods ...RPCMethod) (*RPCReply, error) {
 	if err != nil {
 		return nil, err
 	}
+	glog.V(2).Infof("transport receive %s", string(rawXML))
 
 	reply, err := newRPCReply(rawXML, s.ErrOnWarning, rpc.MessageID)
 	if err != nil {
